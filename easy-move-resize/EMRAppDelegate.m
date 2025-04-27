@@ -27,6 +27,7 @@
 }
 
 CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, CGEventRef event, void *refcon) {
+
     EMRAppDelegate *ourDelegate = (__bridge EMRAppDelegate*)refcon;
     int keyModifierFlags = [ourDelegate modifierFlags];
     bool shouldMiddleClickResize = [ourDelegate shouldMiddleClickResize];
@@ -47,7 +48,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         return event;
     }
     
-    if (shouldMiddleClickResize) {
+    if (shouldMiddleClickResize){
         resizeModifierDown = kCGEventOtherMouseDown;
         resizeModifierDragged = kCGEventOtherMouseDragged;
         resizeModifierUp = kCGEventOtherMouseUp;
@@ -102,7 +103,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         
         pid_t PID;
         NSRunningApplication* app;
-        if (!AXUIElementGetPid(_clickedWindow, &PID)) {
+        if(!AXUIElementGetPid(_clickedWindow, &PID)) {
             app = [NSRunningApplication runningApplicationWithProcessIdentifier:PID];
             if ([[ourDelegate getDisabledApps] objectForKey:[app bundleIdentifier]] != nil) {
                 [moveResize setTracking:0];
@@ -111,7 +112,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
             [ourDelegate setMostRecentApp:app];
         }
 
-        if ([ourDelegate shouldBringWindowToFront]) {
+        if([ourDelegate shouldBringWindowToFront]){
             if (app != nil) {
                 [app activateWithOptions:NSApplicationActivateIgnoringOtherApps];
             }
@@ -362,7 +363,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     _sessionActive = false;
 }
 
-- (void)awakeFromNib{
+-(void)awakeFromNib{
     NSImage *icon = [NSImage imageNamed:@"MenuIcon"];
     statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     [statusItem setMenu:statusMenu];
@@ -395,13 +396,13 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     bool shouldMiddleClickResize = [preferences shouldMiddleClickResize];
     bool resizeOnly = [preferences resizeOnly];
 
-    if (shouldBringWindowToFront) {
+    if(shouldBringWindowToFront){
         [_bringWindowFrontMenu setState:1];
     }
-    if (shouldMiddleClickResize) {
+    if(shouldMiddleClickResize){
         [_middleClickResizeMenu setState:1];
     }
-    if (resizeOnly) {
+    if(resizeOnly){
         [_resizeOnlyMenu setState:1];
     }
     
@@ -495,26 +496,21 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
 - (int)modifierFlags {
     return keyModifierFlags;
 }
-
-- (void)setMostRecentApp:(NSRunningApplication*)app {
+- (void) setMostRecentApp:(NSRunningApplication*)app {
     lastApp = app;
     [_lastAppMenu setTitle:[NSString stringWithFormat:@"Disable for %@", [app localizedName]]];
     [_lastAppMenu setEnabled:YES];
 }
-
-- (NSDictionary*)getDisabledApps {
+- (NSDictionary*) getDisabledApps {
     return [preferences getDisabledApps];
 }
-
-- (BOOL)shouldBringWindowToFront {
+-(BOOL)shouldBringWindowToFront {
     return [preferences shouldBringWindowToFront];
 }
-
-- (BOOL)shouldMiddleClickResize {
+-(BOOL)shouldMiddleClickResize {
     return [preferences shouldMiddleClickResize];
 }
-
-- (BOOL)resizeOnly {
+-(BOOL)resizeOnly {
     return [preferences resizeOnly];
 }
 
