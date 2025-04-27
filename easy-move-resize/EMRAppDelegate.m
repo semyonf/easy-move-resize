@@ -35,10 +35,15 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         return event;
     }
     
+//    NSLog(@"keyModifierFlags: %d ", keyModifierFlags);
+    
     if (shouldMiddleClickResize){
-        resizeModifierDown = kCGEventOtherMouseDown;
-        resizeModifierDragged = kCGEventOtherMouseDragged;
-        resizeModifierUp = kCGEventOtherMouseUp;
+//        resizeModifierDown = kCGEventOtherMouseDown;
+//        resizeModifierDragged = kCGEventOtherMouseDragged;
+//        resizeModifierUp = kCGEventOtherMouseUp;
+        resizeModifierDown = kCGEventLeftMouseDown;
+        resizeModifierDragged = kCGEventLeftMouseDragged;
+        resizeModifierUp = kCGEventLeftMouseUp;
     }
     
     EMRMoveResize* moveResize = [EMRMoveResize instance];
@@ -50,8 +55,26 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     }
     
     CGEventFlags flags = CGEventGetFlags(event);
-    if ((flags & (keyModifierFlags)) != (keyModifierFlags)) {
+    
+    
+    int moveKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskControl;
+    int resizeKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskControl | kCGEventFlagMaskShift;
+    
+    int mode = 0; // 1.move 2.resize
+    
+    if ((flags & (moveKeyModifierFlag)) == (moveKeyModifierFlag)) {
+        mode = 1;
+//        NSLog(@"Control+Option");
+    }
+    if ((flags & (resizeKeyModifierFlag)) == (resizeKeyModifierFlag)) {
+        mode = 2;
+//        NSLog(@"Shift+Control+Option");
+    }
+    
+    
+    if (mode == 0) {
         // didn't find our expected modifiers; this event isn't for us
+//        NSLog(@"not keyModifierFlags, skip");
         return event;
     }
 
@@ -59,9 +82,13 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     
     if (flags & ignoredKeysMask) {
         // also ignore this event if we've got extra modifiers (i.e. holding down Cmd+Ctrl+Alt should not invoke our action)
+        NSLog(@"ignoredKeysMask, skip");
         return event;
     }
-
+    
+    
+    
+    // move or resize
     if ((type == kCGEventLeftMouseDown && !resizeOnly)
             || type == resizeModifierDown) {
         CGPoint mouseLocation = CGEventGetLocation(event);
@@ -80,10 +107,12 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
                 }
                 if (_role != NULL) CFRelease(_role);
             }
-            CFTypeRef _window;
-            if (AXUIElementCopyAttributeValue(_element, (__bridge CFStringRef)NSAccessibilityWindowAttribute, &_window) == kAXErrorSuccess) {
-                if (_element != NULL) CFRelease(_element);
-                _clickedWindow = (AXUIElementRef)_window;
+            if (_clickedWindow==NULL){
+                CFTypeRef _window;
+                if (AXUIElementCopyAttributeValue(_element, (__bridge CFStringRef)NSAccessibilityWindowAttribute, &_window) == kAXErrorSuccess) {
+                    if (_element != NULL) CFRelease(_element);
+                    _clickedWindow = (AXUIElementRef)_window;
+                }
             }
         }
         CFRelease(_systemWideElement);
@@ -108,9 +137,15 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         
         CFTypeRef _cPosition = nil;
         NSPoint cTopLeft;
-        if (AXUIElementCopyAttributeValue((AXUIElementRef)_clickedWindow, (__bridge CFStringRef)NSAccessibilityPositionAttribute, &_cPosition) == kAXErrorSuccess) {
+        
+        NSLog(@" _clickedWindow %p",_clickedWindow);
+        if (AXUIElementCopyAttributeValue((AXUIElementRef)_clickedWindow,
+                                          (__bridge CFStringRef)NSAccessibilityPositionAttribute,
+                                          &_cPosition
+                                          ) == kAXErrorSuccess) {
+            NSLog(@" in AXUIElementCopyAttributeValue ");
             if (!AXValueGetValue(_cPosition, kAXValueCGPointType, (void *)&cTopLeft)) {
-                NSLog(@"ERROR: Could not decode position");
+                NSLog(@"ERROR: Could not decode position: %f,%f",cTopLeft.x,cTopLeft.y);
                 cTopLeft = NSMakePoint(0, 0);
             }
             CFRelease(_cPosition);
@@ -119,14 +154,19 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         cTopLeft.x = (int) cTopLeft.x;
         cTopLeft.y = (int) cTopLeft.y;
 
+        // save clicked window info
         [moveResize setWndPosition:cTopLeft];
         [moveResize setWindow:_clickedWindow];
+        
+        NSLog(@"[kCGEventLeftMouseDown] cTopLeft: %f, %f ", cTopLeft.x,cTopLeft.y);
+        
         if (_clickedWindow != nil) CFRelease(_clickedWindow);
         handled = YES;
     }
 
+    // move
     if (type == kCGEventLeftMouseDragged
-            && [moveResize tracking] > 0) {
+            && [moveResize tracking] > 0 && mode==1) {
         AXUIElementRef _clickedWindow = [moveResize window];
         double deltaX = CGEventGetDoubleValueField(event, kCGMouseEventDeltaX);
         double deltaY = CGEventGetDoubleValueField(event, kCGMouseEventDeltaY);
@@ -148,7 +188,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         handled = YES;
     }
 
-    if (type == resizeModifierDown) {
+    if (type == resizeModifierDown && mode == 2) {
         AXUIElementRef _clickedWindow = [moveResize window];
 
         // on resizeModifierDown click, record which direction we should resize in on the drag
@@ -177,7 +217,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         } else if (clickPoint.x > 2*wndSize.width/3) {
             resizeSection.xResizeDirection = right;
         } else {
-            resizeSection.xResizeDirection = noX;
+            resizeSection.xResizeDirection = right;
         }
 
         if (clickPoint.y < wndSize.height/3) {
@@ -185,20 +225,22 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         } else  if (clickPoint.y > 2*wndSize.height/3) {
             resizeSection.yResizeDirection = top;
         } else {
-            resizeSection.yResizeDirection = noY;
+            resizeSection.yResizeDirection = top;
         }
 
         [moveResize setWndSize:wndSize];
         [moveResize setResizeSection:resizeSection];
         handled = YES;
     }
-
+    
+    // resize drag
     if (type == resizeModifierDragged
-            && [moveResize tracking] > 0) {
+            && [moveResize tracking] > 0 && mode==2 ) {
         AXUIElementRef _clickedWindow = [moveResize window];
         struct ResizeSection resizeSection = [moveResize resizeSection];
         int deltaX = (int) CGEventGetDoubleValueField(event, kCGMouseEventDeltaX);
         int deltaY = (int) CGEventGetDoubleValueField(event, kCGMouseEventDeltaY);
+//        NSLog(@"deltaX: %d, deltaY: %d", deltaX, deltaY);
 
         NSPoint cTopLeft = [moveResize wndPosition];
         NSSize wndSize = [moveResize wndSize];
@@ -232,7 +274,10 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
             default:
                 [NSException raise:@"Unknown yResizeSection" format:@"No case for %d", resizeSection.yResizeDirection];
         }
-
+        
+//        NSLog(@"cTopLeft: %f, %f . wndSize: %f, %f", cTopLeft.x,cTopLeft.y,
+//              wndSize.width, wndSize.height);
+        
         [moveResize setWndPosition:cTopLeft];
         [moveResize setWndSize:wndSize];
 
@@ -241,12 +286,17 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
             // only make a call to update the position if we need to
             if (resizeSection.xResizeDirection == left || resizeSection.yResizeDirection == bottom) {
                 CFTypeRef _position = (CFTypeRef)(AXValueCreate(kAXValueCGPointType, (const void *)&cTopLeft));
-                AXUIElementSetAttributeValue(_clickedWindow, (__bridge CFStringRef)NSAccessibilityPositionAttribute, (CFTypeRef *)_position);
+                AXUIElementSetAttributeValue(_clickedWindow,
+                                             (__bridge CFStringRef)NSAccessibilityPositionAttribute,
+                                             (CFTypeRef *)_position);
+                
                 CFRelease(_position);
             }
 
             CFTypeRef _size = (CFTypeRef)(AXValueCreate(kAXValueCGSizeType, (const void *)&wndSize));
-            AXUIElementSetAttributeValue((AXUIElementRef)_clickedWindow, (__bridge CFStringRef)NSAccessibilitySizeAttribute, (CFTypeRef *)_size);
+            AXUIElementSetAttributeValue((AXUIElementRef)_clickedWindow,
+                                         (__bridge CFStringRef)NSAccessibilitySizeAttribute,
+                                         (CFTypeRef *)_size);
             CFRelease(_size);
             [moveResize setTracking:CACurrentMediaTime()];
         }
