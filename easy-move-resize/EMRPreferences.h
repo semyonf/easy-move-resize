@@ -41,10 +41,10 @@
 - (NSSet*) getFlagStringSet;
 
 // returns a dict of disabled apps
-- (NSDictionary*) getDisabledApps;
+- (NSDictionary*)getDisabledApps;
 
 // add or remove an app from the disabled apps list
-- (void) setDisabledForApp:(NSString*)bundleIdentifier withLocalizedName:(NSString*)localizedName disabled:(BOOL)disabled;
+- (void)setDisabledForApp:(NSString*)bundleIdentifier withLocalizedName:(NSString*)localizedName disabled:(BOOL)disabled;
 
 // reset preferences to the defaults
 - (void)setToDefaults;

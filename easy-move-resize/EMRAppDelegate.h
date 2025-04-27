@@ -33,6 +33,8 @@ static const double kResizeFilterInterval = 0.04;
 @property (weak) IBOutlet NSMenuItem *resizeOnlyMenu;
 @property (weak) IBOutlet NSMenuItem *disabledAppsMenu;
 @property (weak) IBOutlet NSMenuItem *lastAppMenu;
+
 @property (nonatomic) BOOL sessionActive;
+@property NSTimeInterval refreshInterval;
 
 @end

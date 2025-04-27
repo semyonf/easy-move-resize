@@ -11,6 +11,17 @@
     if (self) {
         NSUserDefaults *userDefaults = [[NSUserDefaults alloc] initWithSuiteName:@"userPrefs"];
         preferences = [[EMRPreferences alloc] initWithUserDefaults:userDefaults];
+
+        // Default to 60hz, but check each connected screen for a faster refresh and use the fastest one we find
+        self.refreshInterval = 0.0167;
+        for (NSScreen *screen in [NSScreen screens]) {
+            if (@available(macOS 12.0, *)) {
+                NSTimeInterval maxRefreshInterval = [screen maximumRefreshInterval];
+                if (maxRefreshInterval < self.refreshInterval) {
+                    self.refreshInterval = maxRefreshInterval;
+                }
+            }
+        }
     }
     return self;
 }
@@ -25,6 +36,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     CGEventType resizeModifierDragged = kCGEventRightMouseDragged;
     CGEventType resizeModifierUp = kCGEventRightMouseUp;
     bool handled = NO;
+
+    double refreshInterval = [ourDelegate refreshInterval];
 
     if (![ourDelegate sessionActive]) {
         return event;
@@ -179,7 +192,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         CFTypeRef _position;
 
         // actually applying the change is expensive, so only do it every kMoveFilterInterval seconds
-        if (CACurrentMediaTime() - [moveResize tracking] > kMoveFilterInterval) {
+        if (CACurrentMediaTime() - [moveResize tracking] > refreshInterval) {
             _position = (CFTypeRef) (AXValueCreate(kAXValueCGPointType, (const void *) &thePoint));
             AXUIElementSetAttributeValue(_clickedWindow, (__bridge CFStringRef) NSAccessibilityPositionAttribute, (CFTypeRef *) _position);
             if (_position != NULL) CFRelease(_position);
@@ -282,7 +295,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         [moveResize setWndSize:wndSize];
 
         // actually applying the change is expensive, so only do it every kResizeFilterInterval events
-        if (CACurrentMediaTime() - [moveResize tracking] > kResizeFilterInterval) {
+        if (CACurrentMediaTime() - [moveResize tracking] > refreshInterval) {
             // only make a call to update the position if we need to
             if (resizeSection.xResizeDirection == left || resizeSection.yResizeDirection == bottom) {
                 CFTypeRef _position = (CFTypeRef)(AXValueCreate(kAXValueCGPointType, (const void *)&cTopLeft));
