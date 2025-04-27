@@ -652,7 +652,7 @@
                 <menuItem title="Easy Move+Resize" id="CjR-Hb-76H">
                     <modifierMask key="keyEquivalentModifierMask"/>
                 </menuItem>
-                <menuItem title="Disabled" id="Q0w-G0-Ppy">
+                <menuItem title="Disable" id="Q0w-G0-Ppy">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="toggleDisabled:" target="494" id="agH-Tw-ei0"/>
@@ -677,21 +677,21 @@
                     <menu key="submenu" title="Re-enable for" id="yAl-5D-6Ba"/>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="VPq-PN-NFG"/>
-                <menuItem title="Reset to Defaults" id="emi-it-fz4">
+                <menuItem title="Reset to defaults" id="emi-it-fz4">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="resetToDefaults:" target="494" id="ajL-er-YeU"/>
                     </connections>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="16Z-ZA-yWP"/>
-                <menuItem title="Exit" id="KM2-Wu-6qQ" userLabel="Exit">
+                <menuItem title="Quit" id="KM2-Wu-6qQ" userLabel="Exit">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="terminate:" target="-3" id="qoA-xp-PEb"/>
                     </connections>
                 </menuItem>
             </items>
-            <point key="canvasLocation" x="-372" y="46"/>
+            <point key="canvasLocation" x="-372.5" y="45.5"/>
         </menu>
         <customObject id="494" customClass="EMRAppDelegate">
             <connections>
