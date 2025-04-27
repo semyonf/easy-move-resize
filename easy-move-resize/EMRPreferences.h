@@ -21,7 +21,6 @@
 #define FN_KEY @"FN"
 
 @interface EMRPreferences : NSObject {
-    
 }
 
 @property (nonatomic) BOOL shouldBringWindowToFront;
@@ -32,19 +31,19 @@
 - (id)initWithUserDefaults:(NSUserDefaults *)defaults;
 
 // Get the modifier flags from the standard preferences
-- (int) modifierFlags;
+- (int)modifierFlags;
 
 // Set or unset the given modifier key in the preferences
-- (void) setModifierKey:(NSString*)singleFlagString enabled:(BOOL)enabled;
+- (void)setModifierKey:(NSString*)singleFlagString enabled:(BOOL)enabled;
 
 // returns a set of the currently persisted key constants
-- (NSSet*) getFlagStringSet;
+- (NSSet*)getFlagStringSet;
 
 // returns a dict of disabled apps
-- (NSDictionary*) getDisabledApps;
+- (NSDictionary*)getDisabledApps;
 
 // add or remove an app from the disabled apps list
-- (void) setDisabledForApp:(NSString*)bundleIdentifier withLocalizedName:(NSString*)localizedName disabled:(BOOL)disabled;
+- (void)setDisabledForApp:(NSString*)bundleIdentifier withLocalizedName:(NSString*)localizedName disabled:(BOOL)disabled;
 
 // reset preferences to the defaults
 - (void)setToDefaults;
