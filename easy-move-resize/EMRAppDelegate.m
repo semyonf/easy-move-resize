@@ -32,9 +32,9 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     int keyModifierFlags = [ourDelegate modifierFlags];
     bool shouldMiddleClickResize = [ourDelegate shouldMiddleClickResize];
     bool resizeOnly = [ourDelegate resizeOnly];
-    CGEventType resizeModifierDown = kCGEventRightMouseDown;
-    CGEventType resizeModifierDragged = kCGEventRightMouseDragged;
-    CGEventType resizeModifierUp = kCGEventRightMouseUp;
+    CGEventType resizeModifierDown = kCGEventLeftMouseDown;
+    CGEventType resizeModifierDragged = kCGEventLeftMouseDragged;
+    CGEventType resizeModifierUp = kCGEventLeftMouseUp;
     bool handled = NO;
 
     double refreshInterval = [ourDelegate refreshInterval];
@@ -70,8 +70,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
     CGEventFlags flags = CGEventGetFlags(event);
     
     
-    int moveKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskControl;
-    int resizeKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskControl | kCGEventFlagMaskShift;
+    int moveKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand;
+    int resizeKeyModifierFlag = kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand | kCGEventFlagMaskShift;
     
     int mode = 0; // 1.move 2.resize
     
@@ -91,7 +91,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
         return event;
     }
 
-    int ignoredKeysMask = (kCGEventFlagMaskShift | kCGEventFlagMaskCommand | kCGEventFlagMaskAlphaShift | kCGEventFlagMaskAlternate | kCGEventFlagMaskControl | kCGEventFlagMaskSecondaryFn) ^ keyModifierFlags;
+    int ignoredKeysMask = (kCGEventFlagMaskShift | kCGEventFlagMaskCommand | kCGEventFlagMaskAlphaShift | kCGEventFlagMaskAlternate | kCGEventFlagMaskControl | kCGEventFlagMaskSecondaryFn) ^ (kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
     
     if (flags & ignoredKeysMask) {
         // also ignore this event if we've got extra modifiers (i.e. holding down Cmd+Ctrl+Alt should not invoke our action)
