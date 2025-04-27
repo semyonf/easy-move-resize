@@ -483,6 +483,13 @@ CGEventRef myCGEventCallback(CGEventTapProxy __unused proxy, CGEventType type, C
 }
 
 - (IBAction)resetToDefaults:(id)sender {
+    NSDictionary *disabledApps = [self getDisabledApps];
+    
+    for (id bundleIdentifier in disabledApps) {
+        [preferences setDisabledForApp:bundleIdentifier withLocalizedName:nil disabled:NO];
+        [self reconstructDisabledAppsSubmenu];
+    }
+    
     EMRMoveResize* moveResize = [EMRMoveResize instance];
     [preferences setToDefaults];
     [self initMenuItems];
